@@ -3,9 +3,13 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/kudras3r/url_shortener/internal/config"
+	"github.com/kudras3r/url_shortener/internal/http-server/handlers/save"
 	"github.com/kudras3r/url_shortener/internal/lib/logger/sl"
 	"github.com/kudras3r/url_shortener/internal/storage/sqlite"
 )
@@ -16,39 +20,44 @@ const (
 )
 
 func main() {
-	// TODO: init config: cleanenv
 	config := config.MustLoad()
 
 	fmt.Println(config)
 
-	// TODO: init logger
 	logger := setupLogger(config.Env)
 	logger.Debug("debug messages are enabled")
 
-	// TODO: init storage
 	storage, err := sqlite.New(config.StoragePath)
 	if err != nil {
 		logger.Error("failed to init db", sl.Err(err))
 		os.Exit(1)
 	}
-
-	// TESTS:
-	// err = storage.SaveURL("asd1.com", "asd1")
-	// if err != nil {
-	// 	logger.Error("failed to save url", sl.Err(err))
-	// 	os.Exit(1)
-	// }
-	// logger.Info("saved url")
-	// err = storage.SaveURL("asd.com", "asd")
-	// if err != nil {
-	// 	logger.Error("failed to save url", sl.Err(err))
-	// 	os.Exit(1)
-	// }
-
 	_ = storage
-	// TODO: init router
 
-	// TODO: run server
+	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
+
+	router.Post("/url", save.New(logger, storage))
+
+	logger.Info("starting server", slog.Any("address", config.Address))
+
+	server := &http.Server{
+		Addr:         config.Address,
+		Handler:      router,
+		ReadTimeout:  config.HTTPServer.Timeout,
+		WriteTimeout: config.HTTPServer.Timeout,
+		IdleTimeout:  config.HTTPServer.IdleTimeout,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
+		logger.Error("failed to start server")
+	}
+
+	logger.Info("server stoped")
 }
 
 func setupLogger(env string) *slog.Logger {
