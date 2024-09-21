@@ -2,3 +2,4 @@ storage/storage.db
 local.env
 config/local.yaml
 internal/http
+internal/http-server/handlers/redirect

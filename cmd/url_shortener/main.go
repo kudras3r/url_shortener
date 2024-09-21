@@ -42,6 +42,7 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
+	//router.Options("/url/", save.OptionsHandler)
 	router.Post("/url/", save.New(logger, storage))
 	router.Get("/url/{alias}", redirect.New(logger, storage))
 
