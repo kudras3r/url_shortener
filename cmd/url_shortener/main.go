@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/kudras3r/url_shortener/internal/config"
+	"github.com/kudras3r/url_shortener/internal/http-server/handlers/redirect"
 	"github.com/kudras3r/url_shortener/internal/http-server/handlers/save"
 	"github.com/kudras3r/url_shortener/internal/lib/logger/sl"
 	"github.com/kudras3r/url_shortener/internal/storage/sqlite"
@@ -41,7 +42,8 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/url", save.New(logger, storage))
+	router.Post("/url/", save.New(logger, storage))
+	router.Get("/url/{alias}", redirect.New(logger, storage))
 
 	logger.Info("starting server", slog.Any("address", config.Address))
 
