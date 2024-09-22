@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/kudras3r/url_shortener/internal/lib/api/response"
@@ -50,9 +50,5 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 		log.Info("got url", slog.String("url", url))
 
 		http.Redirect(w, r, url, http.StatusFound)
-		//render.JSON(w, r, Response{
-		// 	Response: response.Ok(),
-		// 	Url:      url,
-		// })
 	}
 }

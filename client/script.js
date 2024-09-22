@@ -1,34 +1,37 @@
-
-function postData(url = '', data = {}) {
-    try {
-        const response = fetch(url, {
-            mode: "no-cors",
-            method: 'POST', 
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-
+async function postData(url = '', data = {}) {
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
         if (!response.ok) {
-            throw new Error(`Ошибка ${response.status}: ${response.statusText}`); 
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-
-        const result = response.json(); 
-        return result; 
-    } catch (error) {
-        console.error('Ошибка при отправке данных:', error);
-        return { error: error.message }; 
-    }
+        return response.json();
+    })
+    .catch(error => {
+        console.error('Error:', error.message);
+        throw error;
+    });
 }
 
-document.getElementById('linkForm').addEventListener('submit', function(event) {
-    event.preventDefault(); 
-    const link = document.getElementById('linkInput').value; 
+document.querySelector('form').addEventListener('submit', function(event) {
 
-    const apiUrl = 'http://localhost:8082/url/'; 
-    
-    const result = postData(apiUrl, { "url": link }); 
-    console.log(result)
-    document.getElementById('result').innerText = "http://localhost:8082/" + result.alias; 
+    event.preventDefault();
+
+    const url = 'http://localhost:8082/url/'; 
+    const data = { url: document.getElementById('linkInput').value }; 
+
+    postData(url, data)
+        .then(responseData => {
+            const aliasValue = responseData.alias; 
+            const resUrl = 'http://localhost:8082/url/' + aliasValue;
+            document.getElementById('result').innerHTML = '<a href="' + resUrl + '">' + resUrl + '</a>';
+        })
+        .catch(error => {
+            console.error('Error in postData:', error.message); 
+        });
 });
